@@ -463,6 +463,9 @@
   .bd-payments-scope .max-h-\[55vh\] {
     max-height: 55vh;
   }
+  .bd-payments-scope .max-h-\[300px\] {
+    max-height: 300px;
+  }
   .bd-payments-scope .w-full {
     width: 100%;
   }
@@ -878,9 +881,6 @@
   .bd-payments-scope .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
-  .bd-payments-scope .py-3\.5 {
-    padding-block: calc(var(--spacing) * 3.5);
-  }
   .bd-payments-scope .py-4 {
     padding-block: calc(var(--spacing) * 4);
   }
@@ -890,11 +890,17 @@
   .bd-payments-scope .pt-4 {
     padding-top: calc(var(--spacing) * 4);
   }
+  .bd-payments-scope .pt-6 {
+    padding-top: calc(var(--spacing) * 6);
+  }
   .bd-payments-scope .pt-9 {
     padding-top: calc(var(--spacing) * 9);
   }
   .bd-payments-scope .pt-10 {
     padding-top: calc(var(--spacing) * 10);
+  }
+  .bd-payments-scope .pr-1 {
+    padding-right: var(--spacing);
   }
   .bd-payments-scope .pr-10 {
     padding-right: calc(var(--spacing) * 10);
@@ -1439,6 +1445,26 @@
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
+  }
+}
+@layer utilities {
+  .bd-payments-scope .bdp-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .bd-payments-scope .bdp-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .bd-payments-scope .bdp-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--bdp-border);
+    border-radius: 9999px;
+  }
+  .bd-payments-scope .bdp-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--bdp-muted-fg);
+  }
+  .bd-payments-scope .bdp-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bdp-border) transparent;
   }
 }
 @property --tw-translate-x {

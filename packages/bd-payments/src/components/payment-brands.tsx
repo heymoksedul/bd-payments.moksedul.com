@@ -128,7 +128,7 @@ export function PaymentBrandMark({
     return (
       <span
         className={cn(
-          "relative shrink-0 overflow-hidden",
+          "relative shrink-0 overflow-hidden border border-(--bdp-border)",
           dimensions,
           className,
         )}

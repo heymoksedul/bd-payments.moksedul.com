@@ -10,6 +10,7 @@ A clean, professional, fully customizable multi-step **payment dialog** for Bang
 - 🧾 **Smart Transaction-ID input** — derives allowed characters and length from your regex, and extracts the ID out of a pasted confirmation SMS.
 - 🪝 **Hookable** — `usePaymentDialog()` wires open state and the async "placing order" handshake for you.
 - 🏷️ **Nothing hardcoded** — title, logo, advance amount, currency, labels and brand colours are all props.
+- 🎨 **Built-in Assets** — gorgeous, optimized inline SVG logos for all 8 payment methods (bKash, Nagad, Rocket, Upay, CellFin, Bank, Card, COD) encoded directly. No external image requests.
 - 📦 **Lightweight** — no Next.js dependency; ships CJS, ESM and full TypeScript types.
 
 ## Installation
@@ -71,7 +72,11 @@ function Checkout() {
             instructions:
               "Open bKash → Send Money\nSend {{amount}} to {{number}}\nCopy the TrxID from the SMS",
           },
-          { method: "NAGAD", accountNumber: "017XXXXXXXX", requireTransactionId: true },
+          {
+            method: "NAGAD",
+            accountNumber: "017XXXXXXXX",
+            requireTransactionId: true,
+          },
           { method: "COD" },
         ]}
         advance={{ enabled: true, amountLabel: "Tk 500" }}
@@ -107,35 +112,43 @@ Pass any subset of theme tokens; they map straight to the `--bdp-*` variables an
 
 ### `<PaymentDialog />` props
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `open` | `boolean` | Whether the dialog is open. |
-| `onOpenChange` | `(open: boolean) => void` | Open-state callback. |
-| `options` | `PaymentOption[]` | The rails you've enabled and their details. |
-| `amountLabel` | `string` | Pre-formatted order total, e.g. `"Tk 1,299"`. |
-| `summary` | `{ label, value }[]` | Rows shown on the review step. |
-| `onConfirm` | `(result: PaymentResult) => void` | Fired when the buyer confirms. |
-| `placing` | `boolean` | Show the "Placing order…" state (handled for you by the hook). |
-| `initialPaymentMethod` | `PaymentMethod \| null` | Pre-select a rail; pass `"COD"` to open the COD flow. |
-| `branding` | `BrandingConfig` | `title`, `subtitle`, `logoUrl`, `secureNote`. |
-| `advance` | `AdvanceConfig` | Optional COD advance: `{ enabled, amountLabel, description? }`. |
-| `brands` | `Partial<Record<PaymentMethod, Partial<PaymentBrand>>>` | Recolour / re-label individual rails. |
-| `labels` | `Partial<Record<PaymentMethod, string>>` | Override default method names. |
+| Prop                   | Type                                                    | Description                                                    |
+| ---------------------- | ------------------------------------------------------- | -------------------------------------------------------------- |
+| `open`                 | `boolean`                                               | Whether the dialog is open.                                    |
+| `onOpenChange`         | `(open: boolean) => void`                               | Open-state callback.                                           |
+| `options`              | `PaymentOption[]`                                       | The rails you've enabled and their details.                    |
+| `amountLabel`          | `string`                                                | Pre-formatted order total, e.g.`"Tk 1,299"`.                   |
+| `summary`              | `{ label, value }[]`                                    | Rows shown on the review step.                                 |
+| `onConfirm`            | `(result: PaymentResult) => void`                       | Fired when the buyer confirms.                                 |
+| `placing`              | `boolean`                                               | Show the "Placing order…" state (handled for you by the hook). |
+| `initialPaymentMethod` | `PaymentMethod \| null`                                 | Pre-select a rail; pass`"COD"` to open the COD flow.           |
+| `branding`             | `BrandingConfig`                                        | `title`, `subtitle`, `logoUrl`, `secureNote`.                  |
+| `advance`              | `AdvanceConfig`                                         | Optional COD advance:`{ enabled, amountLabel, description? }`. |
+| `brands`               | `Partial<Record<PaymentMethod, Partial<PaymentBrand>>>` | Recolour / re-label individual rails.                          |
+| `labels`               | `Partial<Record<PaymentMethod, string>>`                | Override default method names.                                 |
 
 ### `PaymentOption`
 
 ```ts
 interface PaymentOption {
-  method: "COD" | "BKASH" | "NAGAD" | "ROCKET" | "BANK_TRANSFER" | "CARD";
+  method:
+    | "COD"
+    | "BKASH"
+    | "NAGAD"
+    | "ROCKET"
+    | "UPAY"
+    | "CELLFIN"
+    | "BANK_TRANSFER"
+    | "CARD";
   label?: string;
   accountNumber?: string;
   accountName?: string;
   accountType?: "PERSONAL" | "AGENT" | "MERCHANT";
-  logoUrl?: string;              // real logo — replaces the drawn brand tile
-  bankName?: string;             // bank transfer only
+  logoUrl?: string; // real logo — replaces the built-in SVG brand tile
+  bankName?: string; // bank transfer only
   branchName?: string;
   routingNumber?: string;
-  instructions?: string;         // {{amount}} / {{number}} / {{orderNumber}}
+  instructions?: string; // {{amount}} / {{number}} / {{orderNumber}}
   requireTransactionId?: boolean;
   transactionIdPattern?: string; // e.g. "^[A-Z0-9]{10}$"
   sortOrder?: number;

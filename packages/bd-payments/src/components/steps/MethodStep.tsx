@@ -41,39 +41,49 @@ export function MethodStep({
           No payment methods are available right now. Please contact support.
         </p>
       )}
+      <div className="bdp-scrollbar flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1">
+        {options.map((opt) => {
+          const b = brands[opt.method];
+          const loading = busy === opt.method;
 
-      {options.map((opt) => {
-        const b = brands[opt.method];
-        const loading = busy === opt.method;
-
-        return (
-          <button
-            key={opt.method}
-            type="button"
-            disabled={!!busy}
-            onClick={() => onChoose(opt.method)}
-            style={loading ? { borderColor: b.color, background: `${b.color}0D` } : undefined}
-            className={cn(
-              "group flex cursor-pointer items-center gap-3 rounded-xl border border-(--bdp-border) p-3 text-left transition-all",
-              !busy && "hover:bg-(--bdp-muted)",
-              busy && !loading && "opacity-40",
-            )}
-          >
-            <PaymentBrandMark brand={b} logoUrl={opt.logoUrl} />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-(--bdp-fg)">{labelFor(opt)}</p>
-              <p className="truncate text-xs text-(--bdp-muted-fg)">
-                {loading ? "Connecting…" : b.tagline}
-              </p>
-            </div>
-            {loading ? (
-              <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: b.color }} />
-            ) : (
-              <ChevronRight className="size-4 shrink-0 text-(--bdp-muted-fg) transition-transform group-hover:translate-x-0.5" />
-            )}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={opt.method}
+              type="button"
+              disabled={!!busy}
+              onClick={() => onChoose(opt.method)}
+              style={
+                loading
+                  ? { borderColor: b.color, background: `${b.color}0D` }
+                  : undefined
+              }
+              className={cn(
+                "group flex cursor-pointer items-center gap-3 rounded-xl border border-(--bdp-border) p-3 text-left transition-all",
+                !busy && "hover:bg-(--bdp-muted)",
+                busy && !loading && "opacity-40",
+              )}
+            >
+              <PaymentBrandMark brand={b} logoUrl={opt.logoUrl} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-(--bdp-fg)">
+                  {labelFor(opt)}
+                </p>
+                <p className="truncate text-xs text-(--bdp-muted-fg)">
+                  {loading ? "Connecting…" : b.tagline}
+                </p>
+              </div>
+              {loading ? (
+                <Loader2
+                  className="size-4 shrink-0 animate-spin"
+                  style={{ color: b.color }}
+                />
+              ) : (
+                <ChevronRight className="size-4 shrink-0 text-(--bdp-muted-fg) transition-transform group-hover:translate-x-0.5" />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {secureNote && (
         <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-(--bdp-muted-fg)">

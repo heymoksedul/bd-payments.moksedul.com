@@ -2,9 +2,9 @@
 
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+import { cn } from "../lib/cn";
 import { PAYMENT_METHOD_LABELS } from "../lib/labels";
 import { isValidTrxId, parseTrxIdConstraints } from "../lib/payment-validation";
-import { cn } from "../lib/cn";
 import type {
   AdvanceConfig,
   BrandingConfig,
@@ -82,7 +82,9 @@ export function PaymentDialog({
   const [senderNumber, setSenderNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<PaymentMethod | "step" | null>(null);
-  const [successResult, setSuccessResult] = useState<PaymentResult | null>(null);
+  const [successResult, setSuccessResult] = useState<PaymentResult | null>(
+    null,
+  );
 
   // Initialize step & method when the dialog opens.
   useEffect(() => {
@@ -286,8 +288,8 @@ export function PaymentDialog({
         {/* Header */}
         <div
           className={cn(
-            "relative bg-(--bdp-bg) px-5 pb-4 text-(--bdp-fg) transition-colors",
-            step === "method" || step === "cod-choice" ? "pt-9" : "pt-4",
+            "relative bg-(--bdp-bg) px-6 pb-4 text-(--bdp-fg) transition-colors",
+            step === "method" || step === "cod-choice" ? "pt-10" : "pt-6",
           )}
         >
           {step === "method" || step === "cod-choice" ? (
@@ -361,12 +363,12 @@ export function PaymentDialog({
           )}
 
           {/* Amount display */}
-          <div className="mt-5 flex items-center justify-between rounded-xl border border-(--bdp-border) bg-(--bdp-bg) px-4 py-3.5 shadow-xs">
+          <div className="mt-5 flex items-center justify-between rounded-xl border border-(--bdp-border) bg-(--bdp-bg) px-4 py-2.5">
             <span className="text-xs font-semibold uppercase tracking-widest text-(--bdp-muted-fg)">
               {isAdvanceMode ? "Advance Payable" : "Amount Payable"}
             </span>
             <span
-              className="text-xl font-extrabold"
+              className="text-lg font-extrabold"
               style={{ color: "var(--bdp-primary)" }}
             >
               {currentAmountLabel}
@@ -376,60 +378,60 @@ export function PaymentDialog({
 
         {/* Step rail — icon circles connected by lines */}
         {showStepRail && (
-        <div className="flex items-center px-5 py-3">
-          {["Method", "Details", "Confirm"].map((label, i) => {
-            const active = i <= stepIndex;
-            const activeColor = brand?.color ?? "var(--bdp-primary)";
-            return (
-              <React.Fragment key={label}>
-                {/* Step node */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <span
-                    className={cn(
-                      "flex size-9 items-center justify-center rounded-full border-2 transition-colors",
-                      active
-                        ? "text-white"
-                        : "text-(--bdp-muted-fg) border-(--bdp-border) bg-(--bdp-bg)",
-                    )}
-                    style={
-                      active
-                        ? {
-                            backgroundColor: activeColor,
-                            borderColor: activeColor,
-                          }
-                        : undefined
-                    }
-                  >
-                    {stepIcons[i]}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] font-semibold whitespace-nowrap",
-                      active ? "text-(--bdp-fg)" : "text-(--bdp-muted-fg)",
-                    )}
-                  >
-                    {label}
-                  </span>
-                </div>
-                {/* Connector line between steps */}
-                {i < 2 && (
-                  <span
-                    className="mb-3.5 h-0.5 flex-1 rounded-full transition-colors"
-                    style={{
-                      backgroundColor:
-                        i < stepIndex
-                          ? (brand?.color ?? "var(--bdp-primary)")
-                          : "var(--bdp-border)",
-                    }}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+          <div className="flex items-center px-6 py-3">
+            {["Method", "Details", "Confirm"].map((label, i) => {
+              const active = i <= stepIndex;
+              const activeColor = brand?.color ?? "var(--bdp-primary)";
+              return (
+                <React.Fragment key={label}>
+                  {/* Step node */}
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span
+                      className={cn(
+                        "flex size-9 items-center justify-center rounded-full border-2 transition-colors",
+                        active
+                          ? "text-white"
+                          : "text-(--bdp-muted-fg) border-(--bdp-border) bg-(--bdp-bg)",
+                      )}
+                      style={
+                        active
+                          ? {
+                              backgroundColor: activeColor,
+                              borderColor: activeColor,
+                            }
+                          : undefined
+                      }
+                    >
+                      {stepIcons[i]}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-[10px] font-semibold whitespace-nowrap",
+                        active ? "text-(--bdp-fg)" : "text-(--bdp-muted-fg)",
+                      )}
+                    >
+                      {label}
+                    </span>
+                  </div>
+                  {/* Connector line between steps */}
+                  {i < 2 && (
+                    <span
+                      className="mb-3.5 h-0.5 flex-1 rounded-full transition-colors"
+                      style={{
+                        backgroundColor:
+                          i < stepIndex
+                            ? (brand?.color ?? "var(--bdp-primary)")
+                            : "var(--bdp-border)",
+                      }}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         )}
 
-        <div className="max-h-[55vh] overflow-y-auto px-5 py-4">
+        <div className="max-h-[55vh] overflow-y-auto bdp-scrollbar px-6 py-4">
           {step === "method" && (
             <MethodStep
               isAdvanceMode={isAdvanceMode}
@@ -503,11 +505,16 @@ export function PaymentDialog({
                     boxShadow: `0 8px 24px ${brand?.color ?? "#22c55e"}40`,
                   }}
                 >
-                  <CheckCircle2 className="size-8 text-white" strokeWidth={2.5} />
+                  <CheckCircle2
+                    className="size-8 text-white"
+                    strokeWidth={2.5}
+                  />
                 </div>
               </div>
 
-              <p className="text-xl font-bold text-(--bdp-fg)">Order Confirmed!</p>
+              <p className="text-xl font-bold text-(--bdp-fg)">
+                Order Confirmed!
+              </p>
               <p className="mt-1.5 text-sm text-(--bdp-muted-fg)">
                 {successResult.isAdvance
                   ? `Your ${currentAmountLabel} advance has been received.`
@@ -517,18 +524,31 @@ export function PaymentDialog({
               {/* Summary card */}
               <div className="mt-5 w-full rounded-xl border border-(--bdp-border) text-left text-xs">
                 <div className="flex items-center justify-between border-b border-(--bdp-border) px-4 py-3">
-                  <span className="font-medium text-(--bdp-muted-fg)">Payment via</span>
-                  <span className="font-bold text-(--bdp-fg)">{selectedLabel}</span>
+                  <span className="font-medium text-(--bdp-muted-fg)">
+                    Payment via
+                  </span>
+                  <span className="font-bold text-(--bdp-fg)">
+                    {selectedLabel}
+                  </span>
                 </div>
                 {successResult.transactionId && (
                   <div className="flex items-center justify-between border-b border-(--bdp-border) px-4 py-3">
-                    <span className="font-medium text-(--bdp-muted-fg)">Transaction ID</span>
-                    <span className="font-mono font-bold text-(--bdp-fg)">{successResult.transactionId}</span>
+                    <span className="font-medium text-(--bdp-muted-fg)">
+                      Transaction ID
+                    </span>
+                    <span className="font-mono font-bold text-(--bdp-fg)">
+                      {successResult.transactionId}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="font-medium text-(--bdp-muted-fg)">Amount Paid</span>
-                  <span className="font-bold" style={{ color: brand?.color ?? "var(--bdp-primary)" }}>
+                  <span className="font-medium text-(--bdp-muted-fg)">
+                    Amount Paid
+                  </span>
+                  <span
+                    className="font-bold"
+                    style={{ color: brand?.color ?? "var(--bdp-primary)" }}
+                  >
                     {currentAmountLabel}
                   </span>
                 </div>
@@ -539,7 +559,7 @@ export function PaymentDialog({
 
         {/* Footer action */}
         {showFooter && (
-          <div className="border-t border-(--bdp-border) p-4">
+          <div className="border-t border-(--bdp-border) px-6 py-4">
             <Button
               style={
                 brand
@@ -570,7 +590,7 @@ export function PaymentDialog({
         )}
         {/* Success footer — close button */}
         {step === "success" && (
-          <div className="border-t border-(--bdp-border) p-4">
+          <div className="border-t border-(--bdp-border) px-6 py-4">
             <Button
               style={
                 brand

@@ -50,6 +50,15 @@ export const OPTIONS: PaymentOption[] = [
     instructions:
       "Transfer {{amount}} to the account shown above\nEnter the reference number from your receipt below",
   },
+  {
+    method: "CELLFIN",
+    accountNumber: "017 1234 5678",
+    accountType: "PERSONAL",
+    requireTransactionId: true,
+    transactionIdPattern: "^[A-Z0-9]{10}$",
+    instructions:
+      "Open CellFin app and tap Send Money\nSend {{amount}} to {{number}}\nCopy the Transaction ID from the SMS and paste below",
+  },
   { method: "COD" },
 ];
 

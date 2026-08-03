@@ -104,3 +104,24 @@
     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
 }
+
+@layer utilities {
+  .bdp-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .bdp-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .bdp-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--bdp-border);
+    border-radius: 9999px;
+  }
+  .bdp-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--bdp-muted-fg);
+  }
+  .bdp-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bdp-border) transparent;
+  }
+}

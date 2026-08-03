@@ -1,0 +1,106 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   @hellokit/bd-payments — source stylesheet.
+
+   Built with Tailwind v4, then post-processed (scripts/build-css.js) so every
+   rule is namespaced under `.bd-payments-scope`. That isolation means the
+   dialog renders identically in any host app and never leaks styles out.
+
+   Theme is driven entirely by the `--bdp-*` variables defined below; override
+   them via <BdPaymentProvider theme={...}> or your own CSS.
+   ────────────────────────────────────────────────────────────────────────── */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/preflight" layer(base);
+@import "tailwindcss/utilities" layer(utilities);
+
+@source "./";
+
+@layer components {
+  /* ─── Scope tokens: light defaults ──────────────────────────────────── */
+  .bd-payments-scope {
+    font-family: inherit;
+    --bdp-bg:          #ffffff;
+    --bdp-fg:          #09090b;
+    --bdp-muted:       #f4f4f5;
+    --bdp-muted-fg:    #71717a;
+    --bdp-border:      #e4e4e7;
+    --bdp-primary:     #4f46e5;
+    --bdp-primary-fg:  #ffffff;
+    --bdp-destructive: #dc2626;
+    --bdp-radius:      0.75rem;
+    --bdp-warning-bg:  rgba(245, 158, 11, 0.10);
+    --bdp-warning-border: rgba(245, 158, 11, 0.25);
+    --bdp-warning-fg:  #92400e;
+    --bdp-warning-title: #b45309;
+    color-scheme: light;
+  }
+
+  /* ─── Scope tokens: dark (follows a `.dark` ancestor) ───────────────── */
+  :is(.dark .bd-payments-scope) {
+    --bdp-bg:          #18181b;
+    --bdp-fg:          #fafafa;
+    --bdp-muted:       #27272a;
+    --bdp-muted-fg:    #a1a1aa;
+    --bdp-border:      #3f3f46;
+    --bdp-primary:     #6366f1;
+    --bdp-primary-fg:  #ffffff;
+    --bdp-destructive: #f87171;
+    --bdp-warning-bg:  rgba(245, 158, 11, 0.15);
+    --bdp-warning-border: rgba(245, 158, 11, 0.35);
+    --bdp-warning-fg:  #fbbf24;
+    --bdp-warning-title: #f59e0b;
+    color-scheme: dark;
+  }
+
+  /* ─── Portalled root elements ───────────────────────────────────────────
+     The overlay and dialog panel carry the `.bd-payments-scope` class on the
+     SAME element as their layout classes. Tailwind's scoped utilities are
+     descendant rules (`.bd-payments-scope .fixed`) and so never match the
+     scope element itself — so their positioning, backdrop and surface live
+     here as explicit rules instead. Everything *inside* the panel is a
+     descendant and keeps using normal scoped utilities. */
+  .bd-payments-scope.bdp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.4);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    animation: bdp-fade-in 120ms ease-out;
+  }
+  .bd-payments-scope.bdp-content {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    display: grid;
+    width: 100%;
+    max-width: calc(100% - 2rem);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    border-radius: 1rem;
+    border: 1px solid var(--bdp-border);
+    background: var(--bdp-bg);
+    color: var(--bdp-fg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    outline: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    animation: bdp-pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (min-width: 40rem) {
+    .bd-payments-scope.bdp-content {
+      max-width: 27.5rem;
+    }
+  }
+  @keyframes bdp-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes bdp-pop-in {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+}

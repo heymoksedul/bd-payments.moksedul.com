@@ -1,0 +1,9 @@
+{
+  "name": "bd-payments-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "pnpm --filter @hellokit/bd-payments build",
+    "dev": "pnpm --filter @hellokit/bd-payments dev"
+  }
+}

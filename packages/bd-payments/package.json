@@ -1,0 +1,62 @@
+{
+  "name": "@hellokit/bd-payments",
+  "version": "1.0.0",
+  "description": "A clean, professional, fully customizable multi-step payment dialog for Bangladeshi payment methods (bKash, Nagad, Rocket, Bank Transfer, Card, COD). Framework-agnostic React, themeable via CSS variables, and easy to hook into any checkout.",
+  "keywords": [
+    "react",
+    "payment",
+    "bkash",
+    "nagad",
+    "rocket",
+    "bangladesh",
+    "bd-payments",
+    "checkout",
+    "payment-dialog",
+    "mobile-financial-services"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./dist/index.css": "./dist/index.css",
+    "./styles.css": "./dist/index.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:css": "tailwindcss -i src/index.css -o dist/index.raw.css && node scripts/build-css.js",
+    "build:js": "tsup",
+    "build": "pnpm run build:js && pnpm run build:css",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "postcss": "^8.5.1",
+    "radix-ui": "^1.6.7",
+    "react": "^19",
+    "react-dom": "^19",
+    "tailwind-merge": "^3.0.0",
+    "tailwindcss": "^4.3.3",
+    "tsup": "^8.3.6",
+    "typescript": "^5.7.3"
+  }
+}

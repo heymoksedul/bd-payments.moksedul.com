@@ -1,5 +1,7 @@
 # @hellokit/bd-payments
 
+![bd-payments screenshot](https://edge.moksedul.com/images/1785822488241-bd-payments.webp)
+
 A clean, professional, fully customizable multi-step **payment dialog** for Bangladeshi checkouts — bKash, Nagad, Rocket, Bank Transfer, Card and Cash on Delivery. Framework-agnostic React, themeable via CSS variables, and trivial to hook into any order flow.
 
 ## Features

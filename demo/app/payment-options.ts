@@ -8,6 +8,7 @@ export const OPTIONS: PaymentOption[] = [
     accountType: "PERSONAL",
     requireTransactionId: true,
     transactionIdPattern: "^[A-Z0-9]{10}$",
+    requireSenderNumber: true,
     instructions:
       "Open the bKash app and tap Send Money\nSend {{amount}} to {{number}}\nCopy the Transaction ID from the confirmation SMS\nPaste it below to confirm your order",
   },
@@ -47,6 +48,8 @@ export const OPTIONS: PaymentOption[] = [
     routingNumber: "060270516",
     requireTransactionId: true,
     transactionIdPattern: "^[A-Z0-9-]{6,20}$",
+    requireSenderNumber: true,
+    senderNumberPattern: "^\\d{10,17}$",
     instructions:
       "Transfer {{amount}} to the account shown above\nEnter the reference number from your receipt below",
   },

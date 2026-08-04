@@ -8,6 +8,7 @@ interface Props {
   brand: PaymentBrand;
   label: string;
   transactionId: string;
+  senderNumber?: string;
   summary: SummaryRow[];
   needsTrxId: boolean;
 }
@@ -18,6 +19,7 @@ export function ReviewStep({
   brand,
   label,
   transactionId,
+  senderNumber,
   summary,
   needsTrxId,
 }: Props) {
@@ -31,6 +33,11 @@ export function ReviewStep({
             {transactionId && (
               <p className="truncate font-mono text-xs text-(--bdp-muted-fg)">
                 {transactionId.toUpperCase()}
+              </p>
+            )}
+            {senderNumber && (
+              <p className="truncate font-mono text-xs text-(--bdp-muted-fg)">
+                From: {senderNumber}
               </p>
             )}
           </div>

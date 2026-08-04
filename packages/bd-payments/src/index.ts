@@ -42,4 +42,12 @@ export {
   extractTrxId,
   type TrxIdConstraints,
 } from "./lib/payment-validation";
+export {
+  parseSenderNumberConstraints,
+  isValidSenderNumber,
+  sanitiseSenderNumber,
+  defaultSenderNumberPattern,
+  BD_MOBILE_SENDER_PATTERN,
+  type SenderNumberConstraints,
+} from "./lib/sender-validation";
 export { renderInstructions } from "./lib/payment-instructions";

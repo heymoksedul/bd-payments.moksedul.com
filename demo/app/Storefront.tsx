@@ -162,7 +162,7 @@ export function Storefront() {
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* Product grid */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-xl backdrop-blur-xl transition-all duration-300 dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:shadow-2xl dark:shadow-indigo-950/20 sm:p-8">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-6 backdrop-blur-xl transition-all duration-300 dark:border-zinc-800/80 dark:bg-zinc-900/60 sm:p-8">
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShoppingBag className="size-4 text-indigo-500" />
@@ -271,7 +271,7 @@ export function Storefront() {
         </div>
 
         {/* Cart / checkout sidebar */}
-        <div className="flex h-fit flex-col rounded-2xl border border-slate-200/80 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/60 lg:sticky lg:top-6">
+        <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/60">
           <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
             Your Cart
           </h3>
@@ -281,7 +281,7 @@ export function Storefront() {
               Add a product to see checkout in action.
             </p>
           ) : (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-1 flex-col gap-2.5">
               {cartItems.map((i) => (
                 <div
                   key={i.id}
@@ -304,7 +304,7 @@ export function Storefront() {
                 <span>{amountLabel}</span>
               </div>
 
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="mt-auto pt-2 flex flex-col gap-2">
                 <button
                   onClick={() => checkout("ONLINE")}
                   className="flex items-center justify-center gap-2 cursor-pointer rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:bg-indigo-700 hover:shadow-indigo-500/35 active:scale-[0.99] dark:bg-indigo-600 dark:hover:bg-indigo-500"

@@ -86,6 +86,7 @@ export function PaymentDialog({
   const [transactionId, setTransactionId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [busy, setBusy] = useState<PaymentMethod | "step" | null>(null);
   const [successResult, setSuccessResult] = useState<PaymentResult | null>(
     null,
@@ -105,6 +106,7 @@ export function PaymentDialog({
     setTransactionId("");
     setSenderNumber("");
     setError(null);
+    setConfirmError(null);
     setBusy(null);
     setSuccessResult(null);
   }, [open, initialPaymentMethod, advanceEnabled]);
@@ -234,11 +236,15 @@ export function PaymentDialog({
           : undefined,
       isAdvance: isAdvanceMode || undefined,
     };
+    setConfirmError(null);
     try {
       await onConfirm(result);
-    } finally {
       setSuccessResult(result);
       setStep("success");
+    } catch {
+      setConfirmError(
+        "We couldn't place your order — please try again, or use a different payment method.",
+      );
     }
   }
 
@@ -373,6 +379,7 @@ export function PaymentDialog({
                 type="button"
                 onClick={() => {
                   setError(null);
+                  setConfirmError(null);
                   setStep(step === "review" ? "details" : "method");
                 }}
                 className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--bdp-muted) text-(--bdp-fg) transition-colors hover:opacity-80"
@@ -604,6 +611,11 @@ export function PaymentDialog({
         {/* Footer action */}
         {showFooter && (
           <div className="border-t border-(--bdp-border) px-6 py-4">
+            {step === "review" && confirmError && (
+              <p className="mb-3 text-xs font-medium text-(--bdp-destructive)">
+                {confirmError}
+              </p>
+            )}
             <Button
               style={
                 brand

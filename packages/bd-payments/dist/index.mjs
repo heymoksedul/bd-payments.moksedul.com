@@ -6833,6 +6833,7 @@ function PaymentDialog({
   const [transactionId, setTransactionId] = useState12("");
   const [senderNumber, setSenderNumber] = useState12("");
   const [error, setError] = useState12(null);
+  const [confirmError, setConfirmError] = useState12(null);
   const [busy, setBusy] = useState12(null);
   const [successResult, setSuccessResult] = useState12(
     null
@@ -6850,6 +6851,7 @@ function PaymentDialog({
     setTransactionId("");
     setSenderNumber("");
     setError(null);
+    setConfirmError(null);
     setBusy(null);
     setSuccessResult(null);
   }, [open, initialPaymentMethod, advanceEnabled]);
@@ -6949,11 +6951,15 @@ function PaymentDialog({
       senderNumber: needsTrxId || needsSenderNumber ? senderNumber.trim() || void 0 : void 0,
       isAdvance: isAdvanceMode || void 0
     };
+    setConfirmError(null);
     try {
       await onConfirm(result);
-    } finally {
       setSuccessResult(result);
       setStep("success");
+    } catch {
+      setConfirmError(
+        "We couldn't place your order \u2014 please try again, or use a different payment method."
+      );
     }
   }
   const currentAmountLabel = isAdvanceMode && advance ? advance.amountLabel : amountLabel;
@@ -7102,6 +7108,7 @@ function PaymentDialog({
                         type: "button",
                         onClick: () => {
                           setError(null);
+                          setConfirmError(null);
                           setStep(step === "review" ? "details" : "method");
                         },
                         className: "flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--bdp-muted) text-(--bdp-fg) transition-colors hover:opacity-80",
@@ -7287,24 +7294,27 @@ function PaymentDialog({
                 ] })
               ] })
             ] }),
-            showFooter && /* @__PURE__ */ jsx16("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ jsx16(
-              Button,
-              {
-                style: brand ? {
-                  background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
-                  color: brand.onColor
-                } : void 0,
-                disabled: placing || !!busy || step === "details" && (!trxValid || !senderValid),
-                onClick: step === "details" ? goToReview : confirm,
-                children: placing ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
-                  /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Placing order\u2026"
-                ] }) : busy === "step" ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
-                  /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Verifying details\u2026"
-                ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
-              }
-            ) }),
+            showFooter && /* @__PURE__ */ jsxs8("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: [
+              step === "review" && confirmError && /* @__PURE__ */ jsx16("p", { className: "mb-3 text-xs font-medium text-(--bdp-destructive)", children: confirmError }),
+              /* @__PURE__ */ jsx16(
+                Button,
+                {
+                  style: brand ? {
+                    background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
+                    color: brand.onColor
+                  } : void 0,
+                  disabled: placing || !!busy || step === "details" && (!trxValid || !senderValid),
+                  onClick: step === "details" ? goToReview : confirm,
+                  children: placing ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+                    /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Placing order\u2026"
+                  ] }) : busy === "step" ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+                    /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Verifying details\u2026"
+                  ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
+                }
+              )
+            ] }),
             step === "success" && /* @__PURE__ */ jsx16("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ jsx16(
               Button,
               {
@@ -9213,7 +9223,7 @@ function BdPaymentProvider({
 // src/hooks/usePaymentDialog.ts
 import { useCallback as useCallback8, useState as useState13 } from "react";
 function usePaymentDialog(options2 = {}) {
-  const { onConfirm, keepOpenOnConfirm } = options2;
+  const { onConfirm, keepOpenOnConfirm = true } = options2;
   const [isOpen, setIsOpen] = useState13(false);
   const [placing, setPlacing] = useState13(false);
   const [result, setResult] = useState13(null);
@@ -9221,19 +9231,17 @@ function usePaymentDialog(options2 = {}) {
   const close = useCallback8(() => setIsOpen(false), []);
   const handleConfirm = useCallback8(
     async (r2) => {
-      setResult(r2);
       const ret = onConfirm?.(r2);
       if (ret && typeof ret.then === "function") {
+        setPlacing(true);
         try {
-          setPlacing(true);
           await ret;
-          if (!keepOpenOnConfirm) setIsOpen(false);
         } finally {
           setPlacing(false);
         }
-      } else if (!keepOpenOnConfirm) {
-        setIsOpen(false);
       }
+      setResult(r2);
+      if (!keepOpenOnConfirm) setIsOpen(false);
     },
     [onConfirm, keepOpenOnConfirm]
   );

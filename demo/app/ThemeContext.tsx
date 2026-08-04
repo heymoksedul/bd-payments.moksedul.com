@@ -17,6 +17,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // localStorage/document are only available client-side, so the initial
+    // theme can't be derived during render — this has to run post-mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const saved = localStorage.getItem("bdp_demo_theme") as Theme | null;
     if (saved === "light" || saved === "dark") {

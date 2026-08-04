@@ -170,11 +170,20 @@ declare function BdPaymentProvider({ children, config, }: {
 
 interface UsePaymentDialogOptions {
     /**
-     * Runs when the buyer confirms. If it returns a promise, the dialog shows its
-     * "Placing order…" state until the promise settles, then closes on success.
+     * Runs when the buyer confirms. If it returns a promise, the dialog shows
+     * its "Placing order…" state until the promise settles. On success,
+     * `PaymentDialog` shows its own built-in "Order Confirmed" screen; if the
+     * promise rejects, the dialog shows an error on the review step instead
+     * and stays open so the buyer can retry.
      */
     onConfirm?: (result: PaymentResult) => void | Promise<void>;
-    /** Keep the dialog open after a successful confirm (default: close it). */
+    /**
+     * Keep the dialog open after a successful confirm so `PaymentDialog` can
+     * show its own built-in "Order Confirmed" screen. Default: `true` — the
+     * buyer dismisses it via that screen's "Close" button. Set to `false` to
+     * close the dialog immediately instead (e.g. if you redirect to your own
+     * order-confirmation page on success).
+     */
     keepOpenOnConfirm?: boolean;
 }
 /**

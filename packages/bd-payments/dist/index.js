@@ -6883,6 +6883,7 @@ function PaymentDialog({
   const [transactionId, setTransactionId] = (0, import_react5.useState)("");
   const [senderNumber, setSenderNumber] = (0, import_react5.useState)("");
   const [error, setError] = (0, import_react5.useState)(null);
+  const [confirmError, setConfirmError] = (0, import_react5.useState)(null);
   const [busy, setBusy] = (0, import_react5.useState)(null);
   const [successResult, setSuccessResult] = (0, import_react5.useState)(
     null
@@ -6900,6 +6901,7 @@ function PaymentDialog({
     setTransactionId("");
     setSenderNumber("");
     setError(null);
+    setConfirmError(null);
     setBusy(null);
     setSuccessResult(null);
   }, [open, initialPaymentMethod, advanceEnabled]);
@@ -6999,11 +7001,15 @@ function PaymentDialog({
       senderNumber: needsTrxId || needsSenderNumber ? senderNumber.trim() || void 0 : void 0,
       isAdvance: isAdvanceMode || void 0
     };
+    setConfirmError(null);
     try {
       await onConfirm(result);
-    } finally {
       setSuccessResult(result);
       setStep("success");
+    } catch {
+      setConfirmError(
+        "We couldn't place your order \u2014 please try again, or use a different payment method."
+      );
     }
   }
   const currentAmountLabel = isAdvanceMode && advance ? advance.amountLabel : amountLabel;
@@ -7151,6 +7157,7 @@ function PaymentDialog({
                         type: "button",
                         onClick: () => {
                           setError(null);
+                          setConfirmError(null);
                           setStep(step === "review" ? "details" : "method");
                         },
                         className: "flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--bdp-muted) text-(--bdp-fg) transition-colors hover:opacity-80",
@@ -7336,24 +7343,27 @@ function PaymentDialog({
                 ] })
               ] })
             ] }),
-            showFooter && /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
-              Button,
-              {
-                style: brand ? {
-                  background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
-                  color: brand.onColor
-                } : void 0,
-                disabled: placing || !!busy || step === "details" && (!trxValid || !senderValid),
-                onClick: step === "details" ? goToReview : confirm,
-                children: placing ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Placing order\u2026"
-                ] }) : busy === "step" ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Verifying details\u2026"
-                ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
-              }
-            ) }),
+            showFooter && /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: [
+              step === "review" && confirmError && /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("p", { className: "mb-3 text-xs font-medium text-(--bdp-destructive)", children: confirmError }),
+              /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
+                Button,
+                {
+                  style: brand ? {
+                    background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
+                    color: brand.onColor
+                  } : void 0,
+                  disabled: placing || !!busy || step === "details" && (!trxValid || !senderValid),
+                  onClick: step === "details" ? goToReview : confirm,
+                  children: placing ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Placing order\u2026"
+                  ] }) : busy === "step" ? /* @__PURE__ */ (0, import_jsx_runtime16.jsxs)(import_jsx_runtime16.Fragment, { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Verifying details\u2026"
+                  ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
+                }
+              )
+            ] }),
             step === "success" && /* @__PURE__ */ (0, import_jsx_runtime16.jsx)("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ (0, import_jsx_runtime16.jsx)(
               Button,
               {
@@ -9262,7 +9272,7 @@ function BdPaymentProvider({
 // src/hooks/usePaymentDialog.ts
 var import_react7 = require("react");
 function usePaymentDialog(options2 = {}) {
-  const { onConfirm, keepOpenOnConfirm } = options2;
+  const { onConfirm, keepOpenOnConfirm = true } = options2;
   const [isOpen, setIsOpen] = (0, import_react7.useState)(false);
   const [placing, setPlacing] = (0, import_react7.useState)(false);
   const [result, setResult] = (0, import_react7.useState)(null);
@@ -9270,19 +9280,17 @@ function usePaymentDialog(options2 = {}) {
   const close = (0, import_react7.useCallback)(() => setIsOpen(false), []);
   const handleConfirm = (0, import_react7.useCallback)(
     async (r2) => {
-      setResult(r2);
       const ret = onConfirm?.(r2);
       if (ret && typeof ret.then === "function") {
+        setPlacing(true);
         try {
-          setPlacing(true);
           await ret;
-          if (!keepOpenOnConfirm) setIsOpen(false);
         } finally {
           setPlacing(false);
         }
-      } else if (!keepOpenOnConfirm) {
-        setIsOpen(false);
       }
+      setResult(r2);
+      if (!keepOpenOnConfirm) setIsOpen(false);
     },
     [onConfirm, keepOpenOnConfirm]
   );

@@ -47,6 +47,19 @@ export interface PaymentOption {
    * derives its allowed characters and length limits from this pattern.
    */
   transactionIdPattern?: string;
+  /**
+   * When true the Continue button is blocked until the buyer's own
+   * sender number (the wallet/bank account they paid *from*) is entered.
+   */
+  requireSenderNumber?: boolean;
+  /**
+   * Regex the sender number must satisfy, e.g. `^\d{10,17}$` for a bank
+   * account. Wallet rails (bKash/Nagad/Rocket/Upay/CellFin) default to the
+   * standard 11-digit BD mobile shape when this is omitted; bank transfer
+   * and card have no universal shape, so set this yourself if you want a
+   * strict check for your bank.
+   */
+  senderNumberPattern?: string;
   sortOrder?: number;
 }
 

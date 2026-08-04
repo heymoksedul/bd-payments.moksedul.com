@@ -151,8 +151,34 @@ interface PaymentOption {
   instructions?: string; // {{amount}} / {{number}} / {{orderNumber}}
   requireTransactionId?: boolean;
   transactionIdPattern?: string; // e.g. "^[A-Z0-9]{10}$"
+  requireSenderNumber?: boolean; // block Continue until the buyer's own number is entered
+  senderNumberPattern?: string; // e.g. "^\d{10,17}$" for a bank account
   sortOrder?: number;
 }
+```
+
+### Requiring the buyer's own sender number
+
+`accountNumber` is *your* receiving account. `requireSenderNumber` / `senderNumberPattern` validate the buyer's own wallet or bank account — the number they paid *from* — the same way `requireTransactionId` / `transactionIdPattern` validate the Transaction ID.
+
+Wallet rails (bKash, Nagad, Rocket, Upay, CellFin) default to the standard 11-digit BD mobile shape (`^01[3-9]\d{8}$`) when you don't set a pattern. Bank account numbers have no universal shape across banks, so `BANK_TRANSFER` needs its own pattern if you want it enforced:
+
+```ts
+{
+  method: "BKASH",
+  accountNumber: "017XXXXXXXX",
+  requireTransactionId: true,
+  transactionIdPattern: "^[A-Z0-9]{10}$",
+  requireSenderNumber: true, // uses the built-in 11-digit BD mobile pattern
+},
+{
+  method: "BANK_TRANSFER",
+  bankName: "BRAC Bank",
+  accountNumber: "1501 2039 4857 001",
+  requireTransactionId: true,
+  requireSenderNumber: true,
+  senderNumberPattern: "^\\d{10,17}$", // set this to match your bank's account format
+},
 ```
 
 ## Controlled usage (without the hook)
@@ -177,6 +203,7 @@ const [placing, setPlacing] = useState(false);
 - `PaymentDialog`, `BdPaymentProvider`, `usePaymentDialog`
 - `PAYMENT_BRANDS`, `PaymentBrandMark`, `resolveBrands`, `PAYMENT_METHOD_LABELS`
 - `parseTrxIdConstraints`, `isValidTrxId`, `sanitiseTrxId`, `extractTrxId`, `renderInstructions`
+- `parseSenderNumberConstraints`, `isValidSenderNumber`, `sanitiseSenderNumber`, `defaultSenderNumberPattern`, `BD_MOBILE_SENDER_PATTERN`
 - Types: `PaymentMethod`, `PaymentOption`, `PaymentResult`, `SummaryRow`, `AdvanceConfig`, `BrandingConfig`, `PaymentBrand`, `PaymentTheme`, `BdPaymentConfig`
 
 ## Development

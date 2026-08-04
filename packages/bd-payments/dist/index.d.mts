@@ -40,6 +40,19 @@ interface PaymentOption {
      * derives its allowed characters and length limits from this pattern.
      */
     transactionIdPattern?: string;
+    /**
+     * When true the Continue button is blocked until the buyer's own
+     * sender number (the wallet/bank account they paid *from*) is entered.
+     */
+    requireSenderNumber?: boolean;
+    /**
+     * Regex the sender number must satisfy, e.g. `^\d{10,17}$` for a bank
+     * account. Wallet rails (bKash/Nagad/Rocket/Upay/CellFin) default to the
+     * standard 11-digit BD mobile shape when this is omitted; bank transfer
+     * and card have no universal shape, so set this yourself if you want a
+     * strict check for your bank.
+     */
+    senderNumberPattern?: string;
     sortOrder?: number;
 }
 /** A single label/value row shown in the review recap. */
@@ -157,11 +170,20 @@ declare function BdPaymentProvider({ children, config, }: {
 
 interface UsePaymentDialogOptions {
     /**
-     * Runs when the buyer confirms. If it returns a promise, the dialog shows its
-     * "Placing order…" state until the promise settles, then closes on success.
+     * Runs when the buyer confirms. If it returns a promise, the dialog shows
+     * its "Placing order…" state until the promise settles. On success,
+     * `PaymentDialog` shows its own built-in "Order Confirmed" screen; if the
+     * promise rejects, the dialog shows an error on the review step instead
+     * and stays open so the buyer can retry.
      */
     onConfirm?: (result: PaymentResult) => void | Promise<void>;
-    /** Keep the dialog open after a successful confirm (default: close it). */
+    /**
+     * Keep the dialog open after a successful confirm so `PaymentDialog` can
+     * show its own built-in "Order Confirmed" screen. Default: `true` — the
+     * buyer dismisses it via that screen's "Close" button. Set to `false` to
+     * close the dialog immediately instead (e.g. if you redirect to your own
+     * order-confirmation page on success).
+     */
     keepOpenOnConfirm?: boolean;
 }
 /**
@@ -275,6 +297,49 @@ declare function extractTrxId(raw: string, pattern: string | undefined, constrai
 declare function isValidTrxId(value: string, pattern: string | undefined, constraints: TrxIdConstraints): boolean;
 
 /**
+ * Buyer's own sender-number ("Your wallet number" / "Your account number")
+ * input constraints — the mirror of `payment-validation.ts`'s
+ * transaction-ID constraint parser, but numeric-first: never upper-cased,
+ * digits (and a leading "+") by default.
+ */
+
+interface SenderNumberConstraints {
+    /** Characters the field accepts. Anything else is dropped as it's typed. */
+    allowed: RegExp;
+    minLength: number;
+    /** Hard cap applied to the input — typing simply stops here. */
+    maxLength: number;
+    /** Human-readable requirement, e.g. "11 digits". */
+    hint: string | null;
+}
+/** BD mobile wallet numbers: 11 digits, starting 01[3-9] (e.g. 017XXXXXXXX). */
+declare const BD_MOBILE_SENDER_PATTERN = "^01[3-9]\\d{8}$";
+/**
+ * Wallet rails (bKash/Nagad/Rocket/Upay/CellFin) all move money from a BD
+ * mobile number, so their sender-number pattern can safely default to the
+ * standard 11-digit shape when the store hasn't set one explicitly.
+ *
+ * Bank account numbers have no universal shape across banks — length and
+ * structure differ per bank — so `BANK_TRANSFER` (and `CARD`) get no
+ * default. Set `senderNumberPattern` on the option yourself if you want a
+ * strict check for your specific bank.
+ */
+declare function defaultSenderNumberPattern(method: PaymentMethod): string | undefined;
+/**
+ * Derive length/character-set input constraints from a sender-number
+ * pattern, the same idea as `parseTrxIdConstraints`. Understands
+ * `^[chars]{m,n}$`, `^\d{m,n}$` and their `+`-quantified forms (e.g. a
+ * bank-specific `^\d{10,17}$`); anything more exotic falls back to
+ * permissive numeric limits and leaves the real check to
+ * `isValidSenderNumber` (and the server).
+ */
+declare function parseSenderNumberConstraints(pattern: string | undefined): SenderNumberConstraints;
+/** Clean a keystroke-by-keystroke value: strip disallowed characters, cut to length. */
+declare function sanitiseSenderNumber(raw: string, constraints: SenderNumberConstraints): string;
+/** Full validity check — used to gate the Continue button when a sender number is required. */
+declare function isValidSenderNumber(value: string, pattern: string | undefined, constraints: SenderNumberConstraints): boolean;
+
+/**
  * Expand an admin-authored payment-instruction template into display lines.
  *
  * Supports `{{amount}}`, `{{number}}` and `{{orderNumber}}` placeholders, then
@@ -286,4 +351,4 @@ declare function renderInstructions(template: string, vars: {
     orderNumber?: string;
 }): string[];
 
-export { type AdvanceConfig, type BdPaymentConfig, BdPaymentProvider, type BrandingConfig, PAYMENT_BRANDS, PAYMENT_METHOD_LABELS, type PaymentBrand, PaymentBrandMark, PaymentDialog, type PaymentDialogProps, type PaymentMethod, type PaymentOption, type PaymentResult, type PaymentTheme, type SummaryRow, type TrxIdConstraints, type UsePaymentDialogOptions, extractTrxId, isValidTrxId, parseTrxIdConstraints, renderInstructions, resolveBrands, sanitiseTrxId, useBdPaymentConfig, usePaymentDialog };
+export { type AdvanceConfig, BD_MOBILE_SENDER_PATTERN, type BdPaymentConfig, BdPaymentProvider, type BrandingConfig, PAYMENT_BRANDS, PAYMENT_METHOD_LABELS, type PaymentBrand, PaymentBrandMark, PaymentDialog, type PaymentDialogProps, type PaymentMethod, type PaymentOption, type PaymentResult, type PaymentTheme, type SenderNumberConstraints, type SummaryRow, type TrxIdConstraints, type UsePaymentDialogOptions, defaultSenderNumberPattern, extractTrxId, isValidSenderNumber, isValidTrxId, parseSenderNumberConstraints, parseTrxIdConstraints, renderInstructions, resolveBrands, sanitiseSenderNumber, sanitiseTrxId, useBdPaymentConfig, usePaymentDialog };

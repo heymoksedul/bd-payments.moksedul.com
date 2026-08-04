@@ -5,6 +5,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "../lib/cn";
 import { PAYMENT_METHOD_LABELS } from "../lib/labels";
 import { isValidTrxId, parseTrxIdConstraints } from "../lib/payment-validation";
+import {
+  defaultSenderNumberPattern,
+  isValidSenderNumber,
+  parseSenderNumberConstraints,
+} from "../lib/sender-validation";
 import type {
   AdvanceConfig,
   BrandingConfig,
@@ -81,6 +86,7 @@ export function PaymentDialog({
   const [transactionId, setTransactionId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [busy, setBusy] = useState<PaymentMethod | "step" | null>(null);
   const [successResult, setSuccessResult] = useState<PaymentResult | null>(
     null,
@@ -100,6 +106,7 @@ export function PaymentDialog({
     setTransactionId("");
     setSenderNumber("");
     setError(null);
+    setConfirmError(null);
     setBusy(null);
     setSuccessResult(null);
   }, [open, initialPaymentMethod, advanceEnabled]);
@@ -128,6 +135,7 @@ export function PaymentDialog({
       ? labels[method]
       : "";
   const needsTrxId = !!selected?.requireTransactionId;
+  const needsSenderNumber = !!selected?.requireSenderNumber;
 
   const trxConstraints = useMemo(
     () => parseTrxIdConstraints(selected?.transactionIdPattern),
@@ -142,6 +150,20 @@ export function PaymentDialog({
         trxConstraints,
       ),
     [needsTrxId, transactionId, selected?.transactionIdPattern, trxConstraints],
+  );
+
+  const senderNumberPattern =
+    selected?.senderNumberPattern ??
+    (selected ? defaultSenderNumberPattern(selected.method) : undefined);
+  const senderConstraints = useMemo(
+    () => parseSenderNumberConstraints(senderNumberPattern),
+    [senderNumberPattern],
+  );
+  const senderValid = useMemo(
+    () =>
+      !needsSenderNumber ||
+      isValidSenderNumber(senderNumber, senderNumberPattern, senderConstraints),
+    [needsSenderNumber, senderNumber, senderNumberPattern, senderConstraints],
   );
 
   async function chooseMethod(next: PaymentMethod) {
@@ -178,6 +200,24 @@ export function PaymentDialog({
         return;
       }
     }
+    if (needsSenderNumber) {
+      if (!senderNumber) {
+        setError(
+          method === "BANK_TRANSFER"
+            ? "Enter the bank account number you sent the transfer from."
+            : "Enter the number you sent the payment from.",
+        );
+        return;
+      }
+      if (!senderValid) {
+        setError(
+          `That doesn't look right — ${
+            senderConstraints.hint ?? "check the digits and try again"
+          }.`,
+        );
+        return;
+      }
+    }
     setError(null);
     setBusy("step");
     await new Promise((r) => setTimeout(r, 500));
@@ -190,14 +230,21 @@ export function PaymentDialog({
     const result: PaymentResult = {
       method,
       transactionId: needsTrxId ? transactionId : undefined,
-      senderNumber: needsTrxId ? senderNumber.trim() || undefined : undefined,
+      senderNumber:
+        needsTrxId || needsSenderNumber
+          ? senderNumber.trim() || undefined
+          : undefined,
       isAdvance: isAdvanceMode || undefined,
     };
+    setConfirmError(null);
     try {
       await onConfirm(result);
-    } finally {
       setSuccessResult(result);
       setStep("success");
+    } catch {
+      setConfirmError(
+        "We couldn't place your order — please try again, or use a different payment method.",
+      );
     }
   }
 
@@ -332,6 +379,7 @@ export function PaymentDialog({
                 type="button"
                 onClick={() => {
                   setError(null);
+                  setConfirmError(null);
                   setStep(step === "review" ? "details" : "method");
                 }}
                 className="flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--bdp-muted) text-(--bdp-fg) transition-colors hover:opacity-80"
@@ -475,6 +523,8 @@ export function PaymentDialog({
               setSenderNumber={setSenderNumber}
               trxConstraints={trxConstraints}
               trxValid={trxValid}
+              needsSenderNumber={needsSenderNumber}
+              senderConstraints={senderConstraints}
               error={error}
               clearError={() => setError(null)}
             />
@@ -486,6 +536,7 @@ export function PaymentDialog({
               brand={brand}
               label={selectedLabel}
               transactionId={transactionId}
+              senderNumber={senderNumber}
               summary={summary}
               needsTrxId={needsTrxId}
             />
@@ -560,6 +611,11 @@ export function PaymentDialog({
         {/* Footer action */}
         {showFooter && (
           <div className="border-t border-(--bdp-border) px-6 py-4">
+            {step === "review" && confirmError && (
+              <p className="mb-3 text-xs font-medium text-(--bdp-destructive)">
+                {confirmError}
+              </p>
+            )}
             <Button
               style={
                 brand
@@ -569,7 +625,11 @@ export function PaymentDialog({
                     }
                   : undefined
               }
-              disabled={placing || !!busy || (step === "details" && !trxValid)}
+              disabled={
+                placing ||
+                !!busy ||
+                (step === "details" && (!trxValid || !senderValid))
+              }
               onClick={step === "details" ? goToReview : confirm}
             >
               {placing ? (

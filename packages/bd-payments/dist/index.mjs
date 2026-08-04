@@ -3524,6 +3524,65 @@ function isValidTrxId(value, pattern, constraints) {
   }
 }
 
+// src/lib/sender-validation.ts
+var FALLBACK2 = {
+  allowed: /[\d+]/,
+  minLength: 1,
+  maxLength: 20,
+  hint: null
+};
+var WALLET_METHODS = /* @__PURE__ */ new Set([
+  "BKASH",
+  "NAGAD",
+  "ROCKET",
+  "UPAY",
+  "CELLFIN"
+]);
+var BD_MOBILE_SENDER_PATTERN = "^01[3-9]\\d{8}$";
+function defaultSenderNumberPattern(method) {
+  return WALLET_METHODS.has(method) ? BD_MOBILE_SENDER_PATTERN : void 0;
+}
+function parseSenderNumberConstraints(pattern) {
+  if (pattern === BD_MOBILE_SENDER_PATTERN) {
+    return {
+      allowed: /\d/,
+      minLength: 11,
+      maxLength: 11,
+      hint: "11 digits, e.g. 017XXXXXXXX"
+    };
+  }
+  if (!pattern) return FALLBACK2;
+  const match = /^\^(\\d|\[[^\]]+\])\{(\d+)(?:,(\d+))?\}\$$/.exec(pattern);
+  const plusMatch = /^\^(\\d|\[[^\]]+\])\+\$$/.exec(pattern);
+  const token = match?.[1] ?? plusMatch?.[1];
+  if (!token) return FALLBACK2;
+  const charClass = token === "\\d" ? "0-9" : token.slice(1, -1);
+  let allowed;
+  try {
+    allowed = new RegExp(`[${charClass}]`);
+  } catch {
+    return FALLBACK2;
+  }
+  const min = match ? Number(match[2]) : 1;
+  const max = match ? Number(match[3] ?? match[2]) : FALLBACK2.maxLength;
+  const hint = match && min === max ? `${min} digits` : match ? `${min}\u2013${max} digits` : null;
+  return { allowed, minLength: min, maxLength: max, hint };
+}
+function sanitiseSenderNumber(raw, constraints) {
+  const filtered = Array.from(raw).filter((ch) => constraints.allowed.test(ch)).join("");
+  return filtered.slice(0, constraints.maxLength);
+}
+function isValidSenderNumber(value, pattern, constraints) {
+  if (value.length < constraints.minLength) return false;
+  if (value.length > constraints.maxLength) return false;
+  if (!pattern) return value.length > 0;
+  try {
+    return new RegExp(pattern).test(value);
+  } catch {
+    return true;
+  }
+}
+
 // src/components/Button.tsx
 import * as React from "react";
 import { jsx } from "react/jsx-runtime";
@@ -3545,14 +3604,14 @@ var Button = React.forwardRef(
 );
 Button.displayName = "Button";
 
-// ../../node_modules/.pnpm/@radix-ui+react-primitive@2_89d529a1bae70a6b01b956c8b2bdbce1/node_modules/@radix-ui/react-primitive/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-primitive@2.1.10_@types+react-dom@19.2.4_@types+react@19.2.18__@types+r_89d529a1bae70a6b01b956c8b2bdbce1/node_modules/@radix-ui/react-primitive/dist/index.mjs
 import * as React4 from "react";
 import * as ReactDOM from "react-dom";
 
 // ../../node_modules/.pnpm/@radix-ui+react-slot@1.3.3_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-slot/dist/index.mjs
 import * as React3 from "react";
 
-// ../../node_modules/.pnpm/@radix-ui+react-compose-ref_60a8f511f5a953d1cc58e5040847ca1c/node_modules/@radix-ui/react-compose-refs/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-compose-refs@1.1.5_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-compose-refs/dist/index.mjs
 import * as React2 from "react";
 var __defProp2 = Object.defineProperty;
 var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
@@ -3729,7 +3788,7 @@ var createSlottableError = /* @__PURE__ */ __name2((ownerName) => {
 }, "createSlottableError");
 var use = React3[" use ".trim().toString()];
 
-// ../../node_modules/.pnpm/@radix-ui+react-primitive@2_89d529a1bae70a6b01b956c8b2bdbce1/node_modules/@radix-ui/react-primitive/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-primitive@2.1.10_@types+react-dom@19.2.4_@types+react@19.2.18__@types+r_89d529a1bae70a6b01b956c8b2bdbce1/node_modules/@radix-ui/react-primitive/dist/index.mjs
 import { jsx as jsx2 } from "react/jsx-runtime";
 var __defProp4 = Object.defineProperty;
 var __name3 = (target, value) => __defProp4(target, "name", { value, configurable: true });
@@ -3770,7 +3829,7 @@ function dispatchDiscreteCustomEvent(target, event) {
 }
 __name3(dispatchDiscreteCustomEvent, "dispatchDiscreteCustomEvent");
 
-// ../../node_modules/.pnpm/@radix-ui+react-context@1.2_dc174a77f999d3bc0470f0b9c664f7ff/node_modules/@radix-ui/react-context/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-context@1.2.2_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-context/dist/index.mjs
 import * as React5 from "react";
 import { jsx as jsx3 } from "react/jsx-runtime";
 var __defProp5 = Object.defineProperty;
@@ -3785,8 +3844,8 @@ function createContext2(rootComponentName, defaultContext) {
     return /* @__PURE__ */ jsx3(Context.Provider, { value, children });
   }, "Provider");
   Provider.displayName = rootComponentName + "Provider";
-  function useContext22(consumerName, options = {}) {
-    const { optional = false } = options;
+  function useContext22(consumerName, options2 = {}) {
+    const { optional = false } = options2;
     const context = React5.useContext(Context);
     if (context) return context;
     if (defaultContext !== void 0) return defaultContext;
@@ -3812,8 +3871,8 @@ function createContextScope(scopeName, createContextScopeDeps = []) {
       return /* @__PURE__ */ jsx3(Context.Provider, { value, children });
     }, "Provider");
     Provider.displayName = rootComponentName + "Provider";
-    function useContext22(consumerName, scope, options = {}) {
-      const { optional = false } = options;
+    function useContext22(consumerName, scope, options2 = {}) {
+      const { optional = false } = options2;
       const Context = scope?.[scopeName]?.[index] || BaseContext;
       const context = React5.useContext(Context);
       if (context) return context;
@@ -3915,21 +3974,21 @@ function isFrame(element) {
 }
 __name5(isFrame, "isFrame");
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-control_22187853d61b94632003c277d0370b10/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-controllable-state@1.2.6_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
 import * as React8 from "react";
 
 // ../../node_modules/.pnpm/@radix-ui+primitive@1.1.7/node_modules/@radix-ui/primitive/dist/internal/is-development.false.mjs
 var IS_DEVELOPMENT = false;
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-layout-_c99e7a4bfc0168fd072fc8506ded8cde/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-layout-effect@1.1.4_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
 import * as React6 from "react";
 var useLayoutEffect2 = globalThis?.document ? React6.useLayoutEffect : () => {
 };
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-control_22187853d61b94632003c277d0370b10/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-controllable-state@1.2.6_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
 import * as React22 from "react";
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-effect-_e8d5e8242c04825bf34212c7f6280f14/node_modules/@radix-ui/react-use-effect-event/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-effect-event@0.0.5_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-effect-event/dist/index.mjs
 import * as React7 from "react";
 var __defProp7 = Object.defineProperty;
 var __name6 = (target, value) => __defProp7(target, "name", { value, configurable: true });
@@ -3955,7 +4014,7 @@ function useEffectEvent(callback) {
 }
 __name6(useEffectEvent, "useEffectEvent");
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-control_22187853d61b94632003c277d0370b10/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-controllable-state@1.2.6_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
 var __defProp8 = Object.defineProperty;
 var __name7 = (target, value) => __defProp8(target, "name", { value, configurable: true });
 var useInsertionEffect = React8[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
@@ -4087,7 +4146,7 @@ function useControllableStateReducer(reducer, userArgs, initialArg, init) {
 }
 __name7(useControllableStateReducer, "useControllableStateReducer");
 
-// ../../node_modules/.pnpm/@radix-ui+react-presence@1._c16522d094fa2977c5a9a5cd628ab890/node_modules/@radix-ui/react-presence/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-presence@1.1.10_@types+react-dom@19.2.4_@types+react@19.2.18__@types+re_c16522d094fa2977c5a9a5cd628ab890/node_modules/@radix-ui/react-presence/dist/index.mjs
 import * as React23 from "react";
 import * as React9 from "react";
 var __defProp9 = Object.defineProperty;
@@ -4281,7 +4340,7 @@ function useId(deterministicId) {
 }
 __name9(useId, "useId");
 
-// ../../node_modules/.pnpm/@radix-ui+react-dialog@1.1._f43cda4f5f60c6fd8f384ced683c6d90/node_modules/@radix-ui/react-dialog/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-dialog@1.1.23_@types+react-dom@19.2.4_@types+react@19.2.18__@types+reac_f43cda4f5f60c6fd8f384ced683c6d90/node_modules/@radix-ui/react-dialog/dist/index.mjs
 var dist_exports = {};
 __export(dist_exports, {
   Close: () => DialogClose,
@@ -4305,10 +4364,10 @@ __export(dist_exports, {
 });
 import * as React25 from "react";
 
-// ../../node_modules/.pnpm/@radix-ui+react-dismissable_40e495cae3a960f65f80435c18b02650/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-dismissable-layer@1.1.19_@types+react-dom@19.2.4_@types+react@19.2.18___40e495cae3a960f65f80435c18b02650/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
 import * as React12 from "react";
 
-// ../../node_modules/.pnpm/@radix-ui+react-use-callbac_b03f33a0fc5867b4ab17368fb2aecc43/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-use-callback-ref@1.1.4_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-use-callback-ref/dist/index.mjs
 import * as React11 from "react";
 var __defProp11 = Object.defineProperty;
 var __name10 = (target, value) => __defProp11(target, "name", { value, configurable: true });
@@ -4321,7 +4380,7 @@ function useCallbackRef(callback) {
 }
 __name10(useCallbackRef, "useCallbackRef");
 
-// ../../node_modules/.pnpm/@radix-ui+react-dismissable_40e495cae3a960f65f80435c18b02650/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-dismissable-layer@1.1.19_@types+react-dom@19.2.4_@types+react@19.2.18___40e495cae3a960f65f80435c18b02650/node_modules/@radix-ui/react-dismissable-layer/dist/index.mjs
 import { jsx as jsx4 } from "react/jsx-runtime";
 var __defProp12 = Object.defineProperty;
 var __name11 = (target, value) => __defProp12(target, "name", { value, configurable: true });
@@ -4654,7 +4713,7 @@ function handleAndDispatchCustomEvent(name, handler, detail, { discrete }) {
 }
 __name11(handleAndDispatchCustomEvent, "handleAndDispatchCustomEvent");
 
-// ../../node_modules/.pnpm/@radix-ui+react-focus-scope_3b4e29b84c639c7da7ed6c275ef9f34b/node_modules/@radix-ui/react-focus-scope/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-focus-scope@1.1.16_@types+react-dom@19.2.4_@types+react@19.2.18__@types_3b4e29b84c639c7da7ed6c275ef9f34b/node_modules/@radix-ui/react-focus-scope/dist/index.mjs
 import * as React13 from "react";
 import { jsx as jsx5 } from "react/jsx-runtime";
 var __defProp13 = Object.defineProperty;
@@ -4877,7 +4936,7 @@ function removeLinks(items) {
 }
 __name12(removeLinks, "removeLinks");
 
-// ../../node_modules/.pnpm/@radix-ui+react-portal@1.1._7d49bbd59f67da7ea06e84940374bb40/node_modules/@radix-ui/react-portal/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-portal@1.1.17_@types+react-dom@19.2.4_@types+react@19.2.18__@types+reac_7d49bbd59f67da7ea06e84940374bb40/node_modules/@radix-ui/react-portal/dist/index.mjs
 import * as React14 from "react";
 import * as ReactDOM2 from "react-dom";
 import { jsx as jsx6 } from "react/jsx-runtime";
@@ -4893,7 +4952,7 @@ var Portal = /* @__PURE__ */ React14.forwardRef(
   }, "Portal")
 );
 
-// ../../node_modules/.pnpm/@radix-ui+react-focus-guard_0b6dc35411495c11d7017f4d480bfd1d/node_modules/@radix-ui/react-focus-guards/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-focus-guards@1.1.6_@types+react@19.2.18_react@19.2.8/node_modules/@radix-ui/react-focus-guards/dist/index.mjs
 import * as React15 from "react";
 var __defProp15 = Object.defineProperty;
 var __name14 = (target, value) => __defProp15(target, "name", { value, configurable: true });
@@ -4978,7 +5037,7 @@ import * as React24 from "react";
 // ../../node_modules/.pnpm/react-remove-scroll@2.7.2_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll/dist/es2015/UI.js
 import * as React18 from "react";
 
-// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3_6765803d5ca9f56610f613c0cdac7218/node_modules/react-remove-scroll-bar/dist/es2015/constants.js
+// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll-bar/dist/es2015/constants.js
 var zeroRightClassName = "right-scroll-bar-position";
 var fullWidthClassName = "width-before-scroll-bar";
 var noScrollbarsClassName = "with-scroll-bars-hidden";
@@ -5131,12 +5190,12 @@ function innerCreateMedium(defaults, middleware) {
   };
   return medium;
 }
-function createSidecarMedium(options) {
-  if (options === void 0) {
-    options = {};
+function createSidecarMedium(options2) {
+  if (options2 === void 0) {
+    options2 = {};
   }
   var medium = innerCreateMedium(null);
-  medium.options = __assign({ async: true, ssr: false }, options);
+  medium.options = __assign({ async: true, ssr: false }, options2);
   return medium;
 }
 
@@ -5197,10 +5256,10 @@ RemoveScroll.classNames = {
 // ../../node_modules/.pnpm/react-remove-scroll@2.7.2_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll/dist/es2015/SideEffect.js
 import * as React21 from "react";
 
-// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3_6765803d5ca9f56610f613c0cdac7218/node_modules/react-remove-scroll-bar/dist/es2015/component.js
+// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll-bar/dist/es2015/component.js
 import * as React20 from "react";
 
-// ../../node_modules/.pnpm/react-style-singleton@2.2.3_b6136bc3c152300a6c842c4b9688e211/node_modules/react-style-singleton/dist/es2015/hook.js
+// ../../node_modules/.pnpm/react-style-singleton@2.2.3_@types+react@19.2.18_react@19.2.8/node_modules/react-style-singleton/dist/es2015/hook.js
 import * as React19 from "react";
 
 // ../../node_modules/.pnpm/get-nonce@1.0.1/node_modules/get-nonce/dist/es2015/index.js
@@ -5215,7 +5274,7 @@ var getNonce = function() {
   return void 0;
 };
 
-// ../../node_modules/.pnpm/react-style-singleton@2.2.3_b6136bc3c152300a6c842c4b9688e211/node_modules/react-style-singleton/dist/es2015/singleton.js
+// ../../node_modules/.pnpm/react-style-singleton@2.2.3_@types+react@19.2.18_react@19.2.8/node_modules/react-style-singleton/dist/es2015/singleton.js
 function makeStyleTag() {
   if (!document)
     return null;
@@ -5261,7 +5320,7 @@ var stylesheetSingleton = function() {
   };
 };
 
-// ../../node_modules/.pnpm/react-style-singleton@2.2.3_b6136bc3c152300a6c842c4b9688e211/node_modules/react-style-singleton/dist/es2015/hook.js
+// ../../node_modules/.pnpm/react-style-singleton@2.2.3_@types+react@19.2.18_react@19.2.8/node_modules/react-style-singleton/dist/es2015/hook.js
 var styleHookSingleton = function() {
   var sheet = stylesheetSingleton();
   return function(styles, isDynamic) {
@@ -5274,7 +5333,7 @@ var styleHookSingleton = function() {
   };
 };
 
-// ../../node_modules/.pnpm/react-style-singleton@2.2.3_b6136bc3c152300a6c842c4b9688e211/node_modules/react-style-singleton/dist/es2015/component.js
+// ../../node_modules/.pnpm/react-style-singleton@2.2.3_@types+react@19.2.18_react@19.2.8/node_modules/react-style-singleton/dist/es2015/component.js
 var styleSingleton = function() {
   var useStyle = styleHookSingleton();
   var Sheet = function(_a) {
@@ -5285,7 +5344,7 @@ var styleSingleton = function() {
   return Sheet;
 };
 
-// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3_6765803d5ca9f56610f613c0cdac7218/node_modules/react-remove-scroll-bar/dist/es2015/utils.js
+// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll-bar/dist/es2015/utils.js
 var zeroGap = {
   left: 0,
   top: 0,
@@ -5320,7 +5379,7 @@ var getGapWidth = function(gapMode) {
   };
 };
 
-// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3_6765803d5ca9f56610f613c0cdac7218/node_modules/react-remove-scroll-bar/dist/es2015/component.js
+// ../../node_modules/.pnpm/react-remove-scroll-bar@2.3.8_@types+react@19.2.18_react@19.2.8/node_modules/react-remove-scroll-bar/dist/es2015/component.js
 var Style = styleSingleton();
 var lockAttribute = "data-scroll-locked";
 var getStyles = function(_a, allowRelative, gapMode, important) {
@@ -5781,7 +5840,7 @@ var hideOthers = function(originalTarget, parentNode, markerName) {
   return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
 };
 
-// ../../node_modules/.pnpm/@radix-ui+react-dialog@1.1._f43cda4f5f60c6fd8f384ced683c6d90/node_modules/@radix-ui/react-dialog/dist/index.mjs
+// ../../node_modules/.pnpm/@radix-ui+react-dialog@1.1.23_@types+react-dom@19.2.4_@types+react@19.2.18__@types+reac_f43cda4f5f60c6fd8f384ced683c6d90/node_modules/@radix-ui/react-dialog/dist/index.mjs
 import { Fragment as Fragment4, jsx as jsx7 } from "react/jsx-runtime";
 var __defProp16 = Object.defineProperty;
 var __name15 = (target, value) => __defProp16(target, "name", { value, configurable: true });
@@ -6465,6 +6524,8 @@ function DetailsStep({
   setSenderNumber,
   trxConstraints,
   trxValid,
+  needsSenderNumber,
+  senderConstraints,
   error,
   clearError
 }) {
@@ -6520,8 +6581,8 @@ function DetailsStep({
       ),
       /* @__PURE__ */ jsx13("span", { className: "text-(--bdp-fg) opacity-85 leading-snug min-w-0 flex-1", children: line })
     ] }, i)) }),
-    needsTrxId && /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-3 border-t border-(--bdp-border) pt-4", children: [
-      /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-1.5", children: [
+    (needsTrxId || needsSenderNumber) && /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-3 border-t border-(--bdp-border) pt-4", children: [
+      needsTrxId && /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-1.5", children: [
         /* @__PURE__ */ jsx13(
           FormField,
           {
@@ -6536,7 +6597,9 @@ function DetailsStep({
             className: "font-mono tracking-wide",
             value: transactionId,
             onChange: (e) => {
-              setTransactionId(sanitiseTrxId(e.target.value, trxConstraints));
+              setTransactionId(
+                sanitiseTrxId(e.target.value, trxConstraints)
+              );
               clearError();
             },
             onPaste: (e) => {
@@ -6592,33 +6655,56 @@ function DetailsStep({
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsx13(
-        FormField,
-        {
-          label: method === "BANK_TRANSFER" ? "Your account number (optional)" : "Your wallet number (optional)",
-          inputMode: "numeric",
-          autoComplete: "off",
-          maxLength: 14,
-          placeholder: "01XXXXXXXXX",
-          className: "font-mono",
-          value: senderNumber,
-          onChange: (e) => setSenderNumber(e.target.value.replace(/[^\d+]/g, "")),
-          suffix: /* @__PURE__ */ jsx13(
-            "button",
-            {
-              type: "button",
-              title: "Paste from clipboard",
-              className: "flex size-6 cursor-pointer items-center justify-center rounded-md text-(--bdp-muted-fg) transition-colors hover:bg-(--bdp-muted) hover:text-(--bdp-fg) active:scale-95",
-              onClick: async () => {
-                const text = await readClipboard();
-                if (text)
-                  setSenderNumber(text.replace(/[^\d+]/g, "").slice(0, 14));
-              },
-              children: /* @__PURE__ */ jsx13(ClipboardPaste, { className: "size-3.5" })
-            }
-          )
-        }
-      )
+      /* @__PURE__ */ jsxs5("div", { className: "flex flex-col gap-1.5", children: [
+        /* @__PURE__ */ jsx13(
+          FormField,
+          {
+            label: method === "BANK_TRANSFER" ? `Your account number${needsSenderNumber ? "" : " (optional)"}` : `Your wallet number${needsSenderNumber ? "" : " (optional)"}`,
+            required: needsSenderNumber,
+            inputMode: "numeric",
+            autoComplete: "off",
+            maxLength: senderConstraints.maxLength,
+            placeholder: method === "BANK_TRANSFER" ? "1501203948570" : "01XXXXXXXXX",
+            className: "font-mono",
+            value: senderNumber,
+            onChange: (e) => {
+              setSenderNumber(
+                sanitiseSenderNumber(e.target.value, senderConstraints)
+              );
+              clearError();
+            },
+            onPaste: (e) => {
+              e.preventDefault();
+              setSenderNumber(
+                sanitiseSenderNumber(
+                  e.clipboardData.getData("text"),
+                  senderConstraints
+                )
+              );
+              clearError();
+            },
+            suffix: /* @__PURE__ */ jsx13(
+              "button",
+              {
+                type: "button",
+                title: "Paste from clipboard",
+                className: "flex size-6 cursor-pointer items-center justify-center rounded-md text-(--bdp-muted-fg) transition-colors hover:bg-(--bdp-muted) hover:text-(--bdp-fg) active:scale-95",
+                onClick: async () => {
+                  const text = await readClipboard();
+                  if (text) {
+                    setSenderNumber(
+                      sanitiseSenderNumber(text, senderConstraints)
+                    );
+                    clearError();
+                  }
+                },
+                children: /* @__PURE__ */ jsx13(ClipboardPaste, { className: "size-3.5" })
+              }
+            )
+          }
+        ),
+        senderConstraints.hint && /* @__PURE__ */ jsx13("span", { className: "px-0.5 text-[11px] text-(--bdp-muted-fg)", children: senderConstraints.hint })
+      ] })
     ] }),
     error && /* @__PURE__ */ jsx13("p", { className: "text-xs font-medium text-(--bdp-destructive)", children: error })
   ] });
@@ -6629,7 +6715,7 @@ import { jsx as jsx14, jsxs as jsxs6 } from "react/jsx-runtime";
 function MethodStep({
   isAdvanceMode,
   advanceHint,
-  options,
+  options: options2,
   brands,
   labelFor,
   busy,
@@ -6641,8 +6727,8 @@ function MethodStep({
       /* @__PURE__ */ jsx14(Sparkles, { className: "size-4 shrink-0" }),
       /* @__PURE__ */ jsx14("span", { children: advanceHint })
     ] }),
-    options.length === 0 && /* @__PURE__ */ jsx14("p", { className: "py-6 text-center text-sm text-(--bdp-muted-fg)", children: "No payment methods are available right now. Please contact support." }),
-    /* @__PURE__ */ jsx14("div", { className: "bdp-scrollbar flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1", children: options.map((opt) => {
+    options2.length === 0 && /* @__PURE__ */ jsx14("p", { className: "py-6 text-center text-sm text-(--bdp-muted-fg)", children: "No payment methods are available right now. Please contact support." }),
+    /* @__PURE__ */ jsx14("div", { className: "bdp-scrollbar flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1", children: options2.map((opt) => {
       const b = brands[opt.method];
       const loading = busy === opt.method;
       return /* @__PURE__ */ jsxs6(
@@ -6689,6 +6775,7 @@ function ReviewStep({
   brand,
   label,
   transactionId,
+  senderNumber,
   summary,
   needsTrxId
 }) {
@@ -6698,7 +6785,11 @@ function ReviewStep({
         /* @__PURE__ */ jsx15(PaymentBrandMark, { brand, logoUrl: selected.logoUrl, size: "sm" }),
         /* @__PURE__ */ jsxs7("div", { className: "min-w-0", children: [
           /* @__PURE__ */ jsx15("p", { className: "text-sm font-semibold text-(--bdp-fg)", children: label }),
-          transactionId && /* @__PURE__ */ jsx15("p", { className: "truncate font-mono text-xs text-(--bdp-muted-fg)", children: transactionId.toUpperCase() })
+          transactionId && /* @__PURE__ */ jsx15("p", { className: "truncate font-mono text-xs text-(--bdp-muted-fg)", children: transactionId.toUpperCase() }),
+          senderNumber && /* @__PURE__ */ jsxs7("p", { className: "truncate font-mono text-xs text-(--bdp-muted-fg)", children: [
+            "From: ",
+            senderNumber
+          ] })
         ] })
       ] }),
       summary.map((row) => /* @__PURE__ */ jsxs7("div", { className: "flex items-start justify-between gap-4 p-3", children: [
@@ -6719,7 +6810,7 @@ import { Fragment as Fragment5, jsx as jsx16, jsxs as jsxs8 } from "react/jsx-ru
 function PaymentDialog({
   open,
   onOpenChange,
-  options,
+  options: options2,
   amountLabel,
   summary,
   onConfirm,
@@ -6742,6 +6833,7 @@ function PaymentDialog({
   const [transactionId, setTransactionId] = useState12("");
   const [senderNumber, setSenderNumber] = useState12("");
   const [error, setError] = useState12(null);
+  const [confirmError, setConfirmError] = useState12(null);
   const [busy, setBusy] = useState12(null);
   const [successResult, setSuccessResult] = useState12(
     null
@@ -6759,26 +6851,28 @@ function PaymentDialog({
     setTransactionId("");
     setSenderNumber("");
     setError(null);
+    setConfirmError(null);
     setBusy(null);
     setSuccessResult(null);
   }, [open, initialPaymentMethod, advanceEnabled]);
   const filteredOptions = useMemo6(() => {
-    let list = [...options];
+    let list = [...options2];
     if (initialPaymentMethod !== "COD" || isAdvanceMode) {
       list = list.filter((o) => o.method !== "COD");
     }
     return list;
-  }, [options, initialPaymentMethod, isAdvanceMode]);
+  }, [options2, initialPaymentMethod, isAdvanceMode]);
   const selected = useMemo6(
-    () => (method === "COD" ? options : filteredOptions).find(
+    () => (method === "COD" ? options2 : filteredOptions).find(
       (o) => o.method === method
     ) ?? null,
-    [filteredOptions, options, method]
+    [filteredOptions, options2, method]
   );
   const brand = method ? brands[method] : null;
   const labelFor = (opt) => opt.label ?? labels[opt.method];
   const selectedLabel = selected ? labelFor(selected) : method ? labels[method] : "";
   const needsTrxId = !!selected?.requireTransactionId;
+  const needsSenderNumber = !!selected?.requireSenderNumber;
   const trxConstraints = useMemo6(
     () => parseTrxIdConstraints(selected?.transactionIdPattern),
     [selected?.transactionIdPattern]
@@ -6790,6 +6884,15 @@ function PaymentDialog({
       trxConstraints
     ),
     [needsTrxId, transactionId, selected?.transactionIdPattern, trxConstraints]
+  );
+  const senderNumberPattern = selected?.senderNumberPattern ?? (selected ? defaultSenderNumberPattern(selected.method) : void 0);
+  const senderConstraints = useMemo6(
+    () => parseSenderNumberConstraints(senderNumberPattern),
+    [senderNumberPattern]
+  );
+  const senderValid = useMemo6(
+    () => !needsSenderNumber || isValidSenderNumber(senderNumber, senderNumberPattern, senderConstraints),
+    [needsSenderNumber, senderNumber, senderNumberPattern, senderConstraints]
   );
   async function chooseMethod(next) {
     if (busy) return;
@@ -6820,6 +6923,20 @@ function PaymentDialog({
         return;
       }
     }
+    if (needsSenderNumber) {
+      if (!senderNumber) {
+        setError(
+          method === "BANK_TRANSFER" ? "Enter the bank account number you sent the transfer from." : "Enter the number you sent the payment from."
+        );
+        return;
+      }
+      if (!senderValid) {
+        setError(
+          `That doesn't look right \u2014 ${senderConstraints.hint ?? "check the digits and try again"}.`
+        );
+        return;
+      }
+    }
     setError(null);
     setBusy("step");
     await new Promise((r2) => setTimeout(r2, 500));
@@ -6831,14 +6948,18 @@ function PaymentDialog({
     const result = {
       method,
       transactionId: needsTrxId ? transactionId : void 0,
-      senderNumber: needsTrxId ? senderNumber.trim() || void 0 : void 0,
+      senderNumber: needsTrxId || needsSenderNumber ? senderNumber.trim() || void 0 : void 0,
       isAdvance: isAdvanceMode || void 0
     };
+    setConfirmError(null);
     try {
       await onConfirm(result);
-    } finally {
       setSuccessResult(result);
       setStep("success");
+    } catch {
+      setConfirmError(
+        "We couldn't place your order \u2014 please try again, or use a different payment method."
+      );
     }
   }
   const currentAmountLabel = isAdvanceMode && advance ? advance.amountLabel : amountLabel;
@@ -6987,6 +7108,7 @@ function PaymentDialog({
                         type: "button",
                         onClick: () => {
                           setError(null);
+                          setConfirmError(null);
                           setStep(step === "review" ? "details" : "method");
                         },
                         className: "flex size-8 cursor-pointer items-center justify-center rounded-full bg-(--bdp-muted) text-(--bdp-fg) transition-colors hover:opacity-80",
@@ -7104,6 +7226,8 @@ function PaymentDialog({
                   setSenderNumber,
                   trxConstraints,
                   trxValid,
+                  needsSenderNumber,
+                  senderConstraints,
                   error,
                   clearError: () => setError(null)
                 }
@@ -7115,6 +7239,7 @@ function PaymentDialog({
                   brand,
                   label: selectedLabel,
                   transactionId,
+                  senderNumber,
                   summary,
                   needsTrxId
                 }
@@ -7169,24 +7294,27 @@ function PaymentDialog({
                 ] })
               ] })
             ] }),
-            showFooter && /* @__PURE__ */ jsx16("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ jsx16(
-              Button,
-              {
-                style: brand ? {
-                  background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
-                  color: brand.onColor
-                } : void 0,
-                disabled: placing || !!busy || step === "details" && !trxValid,
-                onClick: step === "details" ? goToReview : confirm,
-                children: placing ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
-                  /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Placing order\u2026"
-                ] }) : busy === "step" ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
-                  /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
-                  " Verifying details\u2026"
-                ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
-              }
-            ) }),
+            showFooter && /* @__PURE__ */ jsxs8("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: [
+              step === "review" && confirmError && /* @__PURE__ */ jsx16("p", { className: "mb-3 text-xs font-medium text-(--bdp-destructive)", children: confirmError }),
+              /* @__PURE__ */ jsx16(
+                Button,
+                {
+                  style: brand ? {
+                    background: `linear-gradient(135deg, ${brand.color}, ${brand.colorDark})`,
+                    color: brand.onColor
+                  } : void 0,
+                  disabled: placing || !!busy || step === "details" && (!trxValid || !senderValid),
+                  onClick: step === "details" ? goToReview : confirm,
+                  children: placing ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+                    /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Placing order\u2026"
+                  ] }) : busy === "step" ? /* @__PURE__ */ jsxs8(Fragment5, { children: [
+                    /* @__PURE__ */ jsx16(LoaderCircle, { className: "size-4 animate-spin" }),
+                    " Verifying details\u2026"
+                  ] }) : step === "details" ? "Continue" : `Confirm order \xB7 ${currentAmountLabel}`
+                }
+              )
+            ] }),
             step === "success" && /* @__PURE__ */ jsx16("div", { className: "border-t border-(--bdp-border) px-6 py-4", children: /* @__PURE__ */ jsx16(
               Button,
               {
@@ -7712,6 +7840,9 @@ var cssString = `/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com 
   .bd-payments-scope .max-h-\\[55vh\\] {
     max-height: 55vh;
   }
+  .bd-payments-scope .max-h-\\[300px\\] {
+    max-height: 300px;
+  }
   .bd-payments-scope .w-full {
     width: 100%;
   }
@@ -8144,6 +8275,9 @@ var cssString = `/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com 
   }
   .bd-payments-scope .pt-10 {
     padding-top: calc(var(--spacing) * 10);
+  }
+  .bd-payments-scope .pr-1 {
+    padding-right: var(--spacing);
   }
   .bd-payments-scope .pr-10 {
     padding-right: calc(var(--spacing) * 10);
@@ -9088,8 +9222,8 @@ function BdPaymentProvider({
 
 // src/hooks/usePaymentDialog.ts
 import { useCallback as useCallback8, useState as useState13 } from "react";
-function usePaymentDialog(options = {}) {
-  const { onConfirm, keepOpenOnConfirm } = options;
+function usePaymentDialog(options2 = {}) {
+  const { onConfirm, keepOpenOnConfirm = true } = options2;
   const [isOpen, setIsOpen] = useState13(false);
   const [placing, setPlacing] = useState13(false);
   const [result, setResult] = useState13(null);
@@ -9097,19 +9231,17 @@ function usePaymentDialog(options = {}) {
   const close = useCallback8(() => setIsOpen(false), []);
   const handleConfirm = useCallback8(
     async (r2) => {
-      setResult(r2);
       const ret = onConfirm?.(r2);
       if (ret && typeof ret.then === "function") {
+        setPlacing(true);
         try {
-          setPlacing(true);
           await ret;
-          if (!keepOpenOnConfirm) setIsOpen(false);
         } finally {
           setPlacing(false);
         }
-      } else if (!keepOpenOnConfirm) {
-        setIsOpen(false);
       }
+      setResult(r2);
+      if (!keepOpenOnConfirm) setIsOpen(false);
     },
     [onConfirm, keepOpenOnConfirm]
   );
@@ -9136,16 +9268,21 @@ function usePaymentDialog(options = {}) {
   };
 }
 export {
+  BD_MOBILE_SENDER_PATTERN,
   BdPaymentProvider,
   PAYMENT_BRANDS,
   PAYMENT_METHOD_LABELS,
   PaymentBrandMark,
   PaymentDialog,
+  defaultSenderNumberPattern,
   extractTrxId,
+  isValidSenderNumber,
   isValidTrxId,
+  parseSenderNumberConstraints,
   parseTrxIdConstraints,
   renderInstructions,
   resolveBrands,
+  sanitiseSenderNumber,
   sanitiseTrxId,
   useBdPaymentConfig,
   usePaymentDialog

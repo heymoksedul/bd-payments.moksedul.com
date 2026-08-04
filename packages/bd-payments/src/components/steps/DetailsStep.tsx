@@ -8,6 +8,10 @@ import {
   sanitiseTrxId,
   type TrxIdConstraints,
 } from "../../lib/payment-validation";
+import {
+  sanitiseSenderNumber,
+  type SenderNumberConstraints,
+} from "../../lib/sender-validation";
 import type { PaymentBrand, PaymentMethod, PaymentOption } from "../../types";
 import { CopyableValue } from "../CopyableValue";
 import { FormField } from "../FormField";
@@ -34,6 +38,8 @@ interface Props {
   setSenderNumber: (v: string) => void;
   trxConstraints: TrxIdConstraints;
   trxValid: boolean;
+  needsSenderNumber: boolean;
+  senderConstraints: SenderNumberConstraints;
   error: string | null;
   clearError: () => void;
 }
@@ -52,6 +58,8 @@ export function DetailsStep({
   setSenderNumber,
   trxConstraints,
   trxValid,
+  needsSenderNumber,
+  senderConstraints,
   error,
   clearError,
 }: Props) {
@@ -107,37 +115,113 @@ export function DetailsStep({
         </ol>
       )}
 
-      {needsTrxId && (
+      {(needsTrxId || needsSenderNumber) && (
         <div className="flex flex-col gap-3 border-t border-(--bdp-border) pt-4">
+          {needsTrxId && (
+            <div className="flex flex-col gap-1.5">
+              <FormField
+                label={
+                  method === "BANK_TRANSFER"
+                    ? "Transfer reference"
+                    : "Transaction ID (TrxID)"
+                }
+                required
+                inputMode="text"
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                maxLength={trxConstraints.maxLength}
+                placeholder={
+                  method === "BANK_TRANSFER" ? "SLIP-00123" : "9F7A2B1C3D"
+                }
+                className="font-mono tracking-wide"
+                value={transactionId}
+                onChange={(e) => {
+                  setTransactionId(
+                    sanitiseTrxId(e.target.value, trxConstraints),
+                  );
+                  clearError();
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  setTransactionId(
+                    extractTrxId(
+                      e.clipboardData.getData("text"),
+                      selected.transactionIdPattern,
+                      trxConstraints,
+                    ),
+                  );
+                  clearError();
+                }}
+                suffix={
+                  <button
+                    type="button"
+                    title="Paste from clipboard"
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-md text-(--bdp-muted-fg) transition-colors hover:bg-(--bdp-muted) hover:text-(--bdp-fg) active:scale-95"
+                    onClick={async () => {
+                      const text = await readClipboard();
+                      if (text) {
+                        setTransactionId(
+                          extractTrxId(
+                            text,
+                            selected.transactionIdPattern,
+                            trxConstraints,
+                          ),
+                        );
+                        clearError();
+                      }
+                    }}
+                  >
+                    <ClipboardPaste className="size-3.5" />
+                  </button>
+                }
+              />
+              {trxConstraints.hint && (
+                <div className="flex items-center justify-between px-0.5">
+                  <span className="text-[11px] text-(--bdp-muted-fg)">
+                    {trxConstraints.hint}
+                  </span>
+                  <span
+                    className={cn(
+                      "font-mono text-[11px] tabular-nums",
+                      trxValid ? "text-emerald-600" : "text-(--bdp-muted-fg)",
+                    )}
+                  >
+                    {transactionId.length}/{trxConstraints.maxLength}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
             <FormField
               label={
                 method === "BANK_TRANSFER"
-                  ? "Transfer reference"
-                  : "Transaction ID (TrxID)"
+                  ? `Your account number${needsSenderNumber ? "" : " (optional)"}`
+                  : `Your wallet number${needsSenderNumber ? "" : " (optional)"}`
               }
-              required
-              inputMode="text"
+              required={needsSenderNumber}
+              inputMode="numeric"
               autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              maxLength={trxConstraints.maxLength}
+              maxLength={senderConstraints.maxLength}
               placeholder={
-                method === "BANK_TRANSFER" ? "SLIP-00123" : "9F7A2B1C3D"
+                method === "BANK_TRANSFER" ? "1501203948570" : "01XXXXXXXXX"
               }
-              className="font-mono tracking-wide"
-              value={transactionId}
+              className="font-mono"
+              value={senderNumber}
               onChange={(e) => {
-                setTransactionId(sanitiseTrxId(e.target.value, trxConstraints));
+                setSenderNumber(
+                  sanitiseSenderNumber(e.target.value, senderConstraints),
+                );
                 clearError();
               }}
               onPaste={(e) => {
                 e.preventDefault();
-                setTransactionId(
-                  extractTrxId(
+                setSenderNumber(
+                  sanitiseSenderNumber(
                     e.clipboardData.getData("text"),
-                    selected.transactionIdPattern,
-                    trxConstraints,
+                    senderConstraints,
                   ),
                 );
                 clearError();
@@ -150,12 +234,8 @@ export function DetailsStep({
                   onClick={async () => {
                     const text = await readClipboard();
                     if (text) {
-                      setTransactionId(
-                        extractTrxId(
-                          text,
-                          selected.transactionIdPattern,
-                          trxConstraints,
-                        ),
+                      setSenderNumber(
+                        sanitiseSenderNumber(text, senderConstraints),
                       );
                       clearError();
                     }
@@ -165,52 +245,12 @@ export function DetailsStep({
                 </button>
               }
             />
-            {trxConstraints.hint && (
-              <div className="flex items-center justify-between px-0.5">
-                <span className="text-[11px] text-(--bdp-muted-fg)">
-                  {trxConstraints.hint}
-                </span>
-                <span
-                  className={cn(
-                    "font-mono text-[11px] tabular-nums",
-                    trxValid ? "text-emerald-600" : "text-(--bdp-muted-fg)",
-                  )}
-                >
-                  {transactionId.length}/{trxConstraints.maxLength}
-                </span>
-              </div>
+            {senderConstraints.hint && (
+              <span className="px-0.5 text-[11px] text-(--bdp-muted-fg)">
+                {senderConstraints.hint}
+              </span>
             )}
           </div>
-          <FormField
-            label={
-              method === "BANK_TRANSFER"
-                ? "Your account number (optional)"
-                : "Your wallet number (optional)"
-            }
-            inputMode="numeric"
-            autoComplete="off"
-            maxLength={14}
-            placeholder="01XXXXXXXXX"
-            className="font-mono"
-            value={senderNumber}
-            onChange={(e) =>
-              setSenderNumber(e.target.value.replace(/[^\d+]/g, ""))
-            }
-            suffix={
-              <button
-                type="button"
-                title="Paste from clipboard"
-                className="flex size-6 cursor-pointer items-center justify-center rounded-md text-(--bdp-muted-fg) transition-colors hover:bg-(--bdp-muted) hover:text-(--bdp-fg) active:scale-95"
-                onClick={async () => {
-                  const text = await readClipboard();
-                  if (text)
-                    setSenderNumber(text.replace(/[^\d+]/g, "").slice(0, 14));
-                }}
-              >
-                <ClipboardPaste className="size-3.5" />
-              </button>
-            }
-          />
         </div>
       )}
 
